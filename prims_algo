@@ -1,0 +1,89 @@
+.data
+graph: .word  0, 2, 0, 6, 0
+       .word  2, 0, 3, 8, 5 
+       .word  0, 3, 0, 0, 7
+       .word  6, 8, 0, 0, 9
+       .word  0, 5, 7, 9, 0
+.equ vertex 5
+parent: .zero 5*4
+key: .zero 5*4
+mstset: .zero 5*4 
+
+.text
+li x1,1 #true
+la x11,parent
+la x12,key
+la x13,mstset
+la x21,graph
+
+li x2,vertex    #vertex=5=x2
+li x3,0         #counter1 x3=0
+li x6,99        #max value
+li x7,0         #false value
+            
+#for loop
+forloopra:
+bge x3,x2,whatnext #x3=0 x2=5
+slli x4,x3,2       
+add x5,x12,x4      #keybase-x12
+add x8,x13,x4      #mstsetbase-x13
+sw x6,0(x5)        #store 99 (max value ) in every key
+sw x7,0(x8)        #initializing mstset to false/0
+addi x3,x3,1
+j forloopra
+
+whatnext:
+li x10,-1
+sw x0,0(x12)    ##initializing key(0) to 0
+sw x10,0(x11)   #initializing parent(0) to -1
+
+li x3,0             #counter x3=0
+addi x9,x2,-1       # x9 = V-1 = 4
+code:bge x3,x9,whatnext2
+# minkey function
+li x18,0      #v counter in minkey function
+li x19,99     #minimum
+li x30,0      #MIN-index
+something:bge x18,x2,endminkey #for loop
+slli x24,x18,2  
+add x25,x13,x24    #mstset
+add x26,x12,x24    #key
+lw x27,0(x25)
+lw x28,0(x26)
+bne x27,x7,endif
+bge x28,x19,endif
+addi x19,x28,0
+addi x30,x18,0 # returning the value u from minkey function
+endif:
+addi x18,x18,1
+j something
+endminkey:
+slli x31,x30,2
+add x31,x31,x13 
+sw x1,0(x31) #mstset{u}=true
+
+li x15,0
+anything:bge x15,x2,endinnerloop
+mul x20,x30,x2
+add x20,x20,x15
+slli x20,x20,2
+add x20,x20,x21        #to find address of u*V+v
+lw x24,0(x20)          #loading value of graphuv
+slli x23,x15,2
+add x18,x13,x23
+lw x22,0(x18)          # loading value of mstset(v)
+add x25,x23,x12
+lw x26,0(x25)          #loading value of key{v}
+beq x24,x0,endifcondition  # mstSet[v] == false 
+bne x22,x7,endifcondition  # graph[u][v]
+bge x24,x26,endifcondition # graph[u][v] < key[v]
+add x28,x23,x11            
+sw x30,0(x28)             #parent(u) = u
+sw x24,0(x25)             #key[v] = graph[u][v]
+endifcondition:
+addi x15,x15,1   #increment the inner forloop counter
+j anything
+endinnerloop:
+addi x3,x3,1     #increment the outer forloop counter
+j code
+whatnext2:nop
